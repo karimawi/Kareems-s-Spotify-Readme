@@ -1,7 +1,7 @@
 import requests
 from base64 import b64encode
 from dotenv import find_dotenv, load_dotenv
-from flask import Flask, Response, render_template, request
+from flask import Flask, Response, render_template, request, redirect
 from os import getenv
 from random import randint
 
@@ -82,8 +82,8 @@ def generate_bars(bar_count, rainbow):
 
 def load_image_base64(url):
     """Get the Base64 encoded image from url"""
-    resposne = requests.get(url)
-    return b64encode(resposne.content).decode("ascii")
+    response = requests.get(url)
+    return b64encode(response.content).decode("ascii")
 
 
 def get_scan_code(spotify_uri):
@@ -149,6 +149,21 @@ def catch_all(path):
     )
     resp.headers["Cache-Control"] = "s-maxage=1"
     return resp
+
+
+@app.route("/current-song-url")
+def current_song_url():
+    data = spotify_request("me/player/currently-playing")
+    if data:
+        item = data["item"]
+    else:
+        item = spotify_request(
+            "me/player/recently-played?limit=1")["items"][0]["track"]
+    
+    if item:
+        return redirect(item["external_urls"]["spotify"])
+    else:
+        return "No song is currently playing or recently played.", 404
 
 
 if __name__ == "__main__":
