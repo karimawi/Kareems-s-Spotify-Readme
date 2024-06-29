@@ -16,6 +16,7 @@ with open("api/base64/placeholder_image.txt") as f:
 with open("api/base64/spotify_logo.txt") as f:
     B64_SPOTIFY_LOGO = f.read()
 
+
 def get_token():
     """Get a new access token"""
     r = requests.post(
@@ -29,8 +30,9 @@ def get_token():
     )
     try:
         return r.json()["access_token"]
-    except Exception as e:
-        raise Exception(f"Error fetching token: {str(e)}")
+    except BaseException:
+        raise Exception(r.json())
+
 
 def spotify_request(endpoint):
     """Make a request to the specified endpoint"""
@@ -40,6 +42,7 @@ def spotify_request(endpoint):
     )
     return {} if r.status_code == 204 else r.json()
 
+
 def generate_bars(bar_count, rainbow):
     """Build the HTML/CSS snippets for the EQ bars to be injected"""
     bars = "".join(["<div class='bar'></div>" for _ in range(bar_count)])
@@ -47,10 +50,27 @@ def generate_bars(bar_count, rainbow):
     if rainbow and rainbow != "false" and rainbow != "0":
         css += ".bar-container { animation-duration: 2s; }"
     spectrum = [
-        "#ff0000", "#ff4000", "#ff8000", "#ffbf00", "#ffff00", "#bfff00", 
-        "#80ff00", "#40ff00", "#00ff00", "#00ff40", "#00ff80", "#00ffbf", 
-        "#00ffff", "#00bfff", "#0080ff", "#0040ff", "#0000ff", "#4000ff", 
-        "#8000ff", "#bf00ff", "#ff00ff",
+        "#ff0000",
+        "#ff4000",
+        "#ff8000",
+        "#ffbf00",
+        "#ffff00",
+        "#bfff00",
+        "#80ff00",
+        "#40ff00",
+        "#00ff00",
+        "#00ff40",
+        "#00ff80",
+        "#00ffbf",
+        "#00ffff",
+        "#00bfff",
+        "#0080ff",
+        "#0040ff",
+        "#0000ff",
+        "#4000ff",
+        "#8000ff",
+        "#bf00ff",
+        "#ff00ff",
     ]
     for i in range(bar_count):
         css += f""".bar:nth-child({i + 1}) {{
@@ -59,10 +79,12 @@ def generate_bars(bar_count, rainbow):
             }}"""
     return f"{bars}{css}</style>"
 
+
 def load_image_base64(url):
-    """Get the Base64 encoded image from URL"""
+    """Get the Base64 encoded image from url"""
     response = requests.get(url)
     return b64encode(response.content).decode("ascii")
+
 
 def get_scan_code(spotify_uri):
     """Get the track code for a song"""
@@ -70,10 +92,11 @@ def get_scan_code(spotify_uri):
         f"https://scannables.scdn.co/uri/plain/png/000000/white/640/{spotify_uri}"
     )
 
+
 def make_svg(spin, scan, theme, rainbow):
     """Render the HTML template with variables"""
     data = spotify_request("me/player/currently-playing")
-    if data and "item" in data:
+    if data:
         item = data["item"]
     else:
         item = spotify_request(
@@ -93,17 +116,34 @@ def make_svg(spin, scan, theme, rainbow):
 
     return render_template(
         "index.html",
-        bars=generate_bars(bar_count, rainbow),
-        artist=item["artists"][0]["name"],
-        song=item["name"],
-        image=image,
-        scan_code=scan_code if scan_code else B64_PLACEHOLDER_SCAN_CODE,
-        theme=theme,
-        spin=spin,
-        logo=B64_SPOTIFY_LOGO,
+        **{
+            "bars": generate_bars(bar_count, rainbow),
+            "artist": item["artists"][0]["name"],
+            "song": item["name"],
+            "image": image,
+            "scan_code": scan_code if scan_code != "" else B64_PLACEHOLDER_SCAN_CODE,
+            "theme": theme,
+            "spin": spin,
+            "logo": B64_SPOTIFY_LOGO,
+        },
     )
 
+
 app = Flask(__name__)
+
+@app.route("/api/current")
+def current_song_url():
+    data = spotify_request("me/player/currently-playing")
+    if data:
+        item = data["item"]
+    else:
+        item = spotify_request(
+            "me/player/recently-played?limit=1")["items"][0]["track"]
+    
+    if item:
+        return redirect(item["external_urls"]["spotify"])
+    else:
+        return "No song is currently playing or recently played.", 404
 
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
@@ -120,19 +160,6 @@ def catch_all(path):
     resp.headers["Cache-Control"] = "s-maxage=1"
     return resp
 
-@app.route("/api/current-song-url")
-def current_song_url():
-    data = spotify_request("me/player/currently-playing")
-    if data and "item" in data:
-        item = data["item"]
-    else:
-        item = spotify_request(
-            "me/player/recently-played?limit=1")["items"][0]["track"]
-    
-    if item and "external_urls" in item and "spotify" in item["external_urls"]:
-        return redirect(item["external_urls"]["spotify"])
-    else:
-        return "No song is currently playing or recently played.", 404
 
 if __name__ == "__main__":
     app.run(debug=True)
