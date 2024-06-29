@@ -125,6 +125,7 @@ def make_svg(spin, scan, theme, rainbow):
             "theme": theme,
             "spin": spin,
             "logo": B64_SPOTIFY_LOGO,
+            "spotify_url": item["external_urls"]["spotify"]  # Add this line
         },
     )
 
