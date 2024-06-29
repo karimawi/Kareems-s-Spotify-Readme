@@ -132,23 +132,20 @@ def make_svg(spin, scan, theme, rainbow):
 
 app = Flask(__name__)
 
-@app.route("/<path:path>/current")
-def current_song_url():
+
+@app.route("/api")
+def api():
+    redirect_param = request.args.get("redirect", "").lower() in ["true", "1"]
+
     data = spotify_request("me/player/currently-playing")
     if data:
         item = data["item"]
     else:
-        item = spotify_request(
-            "me/player/recently-played?limit=1")["items"][0]["track"]
-    
-    if item:
-        return redirect(item["external_urls"]["spotify"])
-    else:
-        return "No song is currently playing or recently played.", 404
+        item = spotify_request("me/player/recently-played?limit=1")["items"][0]["track"]
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def catch_all(path):
+    if redirect_param:
+        return redirect(item["external_urls"]["spotify"])
+
     resp = Response(
         make_svg(
             request.args.get("spin"),
