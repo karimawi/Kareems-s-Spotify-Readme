@@ -46,11 +46,12 @@
                 .cover {
                     width: 120px;
                     height: 120px;
-                    {% if spin %}                    border-radius: 50%;
-                    animation: spin 0ms -800ms linear infinite;
-                    animation-duration: 10s;
+                    {% if spin %}
+                        border-radius: 50%;
+                        animation: spin 0ms -800ms linear infinite;
+                        animation-duration: 10s;
                     {% else %}
-                    border-radius: 10px;
+                        border-radius: 10px;
                     {% endif %}
                     {% if theme == 'dark' %}
                         box-shadow: 0 0 10px 5px #1b2027;
@@ -91,7 +92,7 @@
                     {% if theme == 'dark' %}
                         color: aliceblue;
                     {% else %}
-                        color: #161B22;;
+                        color: #161B22;
                     {% endif %}
                 }
                 p {
@@ -147,7 +148,7 @@
                     }
                 }
             </style>
-            <a href="https://github.com/karimawi" target="_blank">
+            <a href="{{ spotify_url }}" target="_blank">
                 <main>
                     {% if scan_code %}
                         <img class="scan-code" src="data:image/png;base64, {{scan_code}}" alt="Scan Code" />
