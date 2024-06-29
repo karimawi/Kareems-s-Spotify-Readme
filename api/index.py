@@ -148,7 +148,7 @@ def catch_all(path):
     return resp
 
 
-@app.route("/api/current-song-url")
+@app.route("/api/current")
 def current_song_url():
     data = spotify_request("me/player/currently-playing")
     if data:
