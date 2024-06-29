@@ -114,9 +114,6 @@ def make_svg(spin, scan, theme, rainbow):
         bar_count = 12
         scan_code = None
 
-    print(scan, type(scan))
-    print(scan_code, type(scan_code))
-
     return render_template(
         "index.html",
         **{
@@ -151,7 +148,7 @@ def catch_all(path):
     return resp
 
 
-@app.route("/current-song-url")
+@app.route("/api/current-song-url")
 def current_song_url():
     data = spotify_request("me/player/currently-playing")
     if data:
